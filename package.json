@@ -1,0 +1,35 @@
+{
+  "name": "@holepunchto/keet-hd-key",
+  "version": "0.0.0",
+  "description": "Hierarchical Deterministic Keys for Keet Identities",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && brittle test/*.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "brittle": "^3.3.2",
+    "hypercore-crypto": "^3.4.0",
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "b4a": "^1.6.4",
+    "bip39": "^3.1.0",
+    "compact-encoding": "^2.13.0",
+    "nanoassert": "^2.0.0",
+    "sodium-universal": "^4.0.0"
+  },
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/keet-identity-key.git"
+  },
+  "bugs": {
+    "url": "https://github.com/holepunchto/keet-identity-key/issues"
+  },
+  "homepage": "https://github.com/holepunchto/keet-identity-key#readme"
+}
