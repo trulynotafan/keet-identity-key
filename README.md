@@ -14,20 +14,19 @@ const IdentityKey = require('@holepunchto/keet-identity-key')
 const mnemonic = Identity.generateMnemonic()
 const { root } = IdentityKey.from({ mnemonic })
 
-const proof = IdentityKey.bootstrap({ mnemonic }, deviceKey)
+const proof0 = IdentityKey.bootstrap({ mnemonic }, mainDevice.publicKey)
+const proof = IdentityKey.attest(auxillaryDevice.publicKey, mainDevice, proof0)
 
 const info = IdentityKey.verify(proof)
 
 if (info === null) {
   // verification failed
-}
+} else {
+  const { root } = IdentityKey.from({ mnemonic })
 
-console.log(info)
-// {
-//   root,
-//   publicKey,
-//   timestamp
-// }
+  console.log(b4a.equals(info.root, root)) // true
+  console.log(b4a.equals(info.publicKey, auxillaryDevice.publicKey)) // true
+}
 ```
 
 ## API
