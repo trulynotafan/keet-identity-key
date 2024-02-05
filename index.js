@@ -55,7 +55,7 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
-    const signature = parent.sign(key)
+    const signature = KeyChain.sign(key, parent)
 
     proof.chain.push({ key, signature })
 
