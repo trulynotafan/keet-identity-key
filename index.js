@@ -36,7 +36,7 @@ module.exports = class IdentityKey {
     }
   }
 
-  static generate ({ root, seed, mnemonic }, device) {
+  static bootstrap ({ root, seed, mnemonic }, device) {
     if (!root) root = KeyChain.from({ seed, mnemonic }, KEET_ROOT_PATH)
 
     const proof = {
@@ -49,7 +49,7 @@ module.exports = class IdentityKey {
   }
 
   static attest (key, parent, proof) {
-    if (!proof) return IdentityKey.generate({ root: parent }, key)
+    if (!proof) return IdentityKey.bootstrap({ root: parent }, key)
 
     if (b4a.isBuffer(proof)) {
       proof = c.decode(ProofEncoding, proof)

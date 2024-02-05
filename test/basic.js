@@ -11,7 +11,7 @@ test('basic', function (t) {
 
   const { root } = IdentityKey.from({ mnemonic })
 
-  const proof = IdentityKey.generate({ mnemonic }, publicKey)
+  const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
   const auth = IdentityKey.verify(proof)
 
   t.unlike(auth, null)
@@ -24,7 +24,7 @@ test('basic - timestamp fail', function (t) {
 
   const { publicKey } = crypto.keyPair()
 
-  const proof = IdentityKey.generate({ mnemonic }, publicKey)
+  const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
   const auth = IdentityKey.verify(proof, { timestamp: Date.now() + 1 })
 
   t.alike(auth, null)
@@ -35,7 +35,7 @@ test('basic - root fail', function (t) {
 
   const { publicKey } = crypto.keyPair()
 
-  const proof = IdentityKey.generate({ mnemonic }, publicKey)
+  const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
   const auth = IdentityKey.verify(proof, { root: publicKey })
 
   t.alike(auth, null)
@@ -49,7 +49,7 @@ test('basic - device authenticates another device', function (t) {
 
   const { root } = IdentityKey.from({ mnemonic })
 
-  const proof1 = IdentityKey.generate({ mnemonic }, device1.publicKey)
+  const proof1 = IdentityKey.bootstrap({ mnemonic }, device1.publicKey)
   const proof2 = IdentityKey.attest(device2.publicKey, device1, proof1)
 
   const auth = IdentityKey.verify(proof2)
