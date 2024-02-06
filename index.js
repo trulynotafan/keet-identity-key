@@ -4,13 +4,19 @@ const b4a = require('b4a')
 const KeyChain = require('./lib/keychain')
 const ProofEncoding = require('./lib/encoding')
 
-// see https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-const KEET_TYPE = 0x03ce
+const PURPOSE = 44 // BIP-44 wallet
 
-// derivation paths
-const KEET_ROOT_PATH = [KEET_TYPE, 0, 0] // m/keet'/0'/1'
-const KEET_DISCOVERY_PATH = [KEET_TYPE, 1, 0] // m/keet'/1'/0'
-const KEET_ENCRYPTION_PATH = [KEET_TYPE, 1, 1] // m/keet'/1'/1'
+// see https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+const KEET_SLIP44 = 5338
+
+// derivation paths:
+// m/44'/keet'/0'/1' -> root
+// m/44'/keet'/1'/0' -> discoveryKey
+// m/44'/keet'/1'/1' -> publicKey
+
+const KEET_ROOT_PATH = [PURPOSE, KEET_SLIP44, 0, 0]
+const KEET_DISCOVERY_PATH = [PURPOSE, KEET_SLIP44, 1, 0]
+const KEET_ENCRYPTION_PATH = [PURPOSE, KEET_SLIP44, 1, 1]
 
 module.exports = class IdentityKey {
   static generateMnemonic () {
