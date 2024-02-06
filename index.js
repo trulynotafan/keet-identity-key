@@ -3,6 +3,7 @@ const b4a = require('b4a')
 
 const KeyChain = require('./lib/keychain')
 const ProofEncoding = require('./lib/encoding')
+const { sign, verify } = require('./lib/crypto')
 
 const PURPOSE = 44 // BIP-44 wallet
 
@@ -32,8 +33,8 @@ module.exports = class IdentityKey {
 
     const root = keyPair.get(KEET_ROOT_PATH)
 
-    const discoveryKey = keyPair.get(KEET_DISCOVERY_PATH).secretKey
-    const encryptionKey = keyPair.get(KEET_ENCRYPTION_PATH).secretKey
+    const discoveryKey = keyPair.get(KEET_DISCOVERY_PATH).secretKey.subarray(0, 32)
+    const encryptionKey = keyPair.get(KEET_ENCRYPTION_PATH).secretKey.subarray(0, 32)
 
     return {
       root: root.publicKey,
@@ -61,7 +62,7 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
-    const signature = KeyChain.sign(key, parent)
+    const signature = sign(key, parent)
 
     proof.chain.push({ key, signature })
 
@@ -83,7 +84,7 @@ module.exports = class IdentityKey {
       const { key, signature } = proof.chain[i]
       const parent = i === 0 ? proof.root : proof.chain[i - 1].key
 
-      if (!KeyChain.verify(key, signature, parent)) {
+      if (!verify(key, signature, parent)) {
         return null
       }
     }
