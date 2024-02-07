@@ -54,7 +54,13 @@ Use an existing `parent` key pair to attest to another `key`.
 
 If provided with a `proof` linking `parent` to a given root key, then the returned proof will link `key` back to the same root key.
 
-#### `info = IdentityKey.verify(proof, opts ={ timestamp, identityPublicKey, devicePublicKey })`
+#### `proof = IdentityKey.attestData(data, keyPair, proof)`
+
+Append an attestation of arbitrary `data` to an existing proof. The attestation will be verified as part of the proof.
+
+`keyPair` should correspond to the last public key in the proof's chain.
+
+#### `info = IdentityKey.verify(proof, attestedData, opts ={ timestamp, identityPublicKey, devicePublicKey })`
 
 Verify a proof.
 
@@ -62,6 +68,8 @@ Returns `null` if verification fails, otherwise an object with:
 - `timestamp`: a timestamp at which the id was bootstrapped
 - `identityPublicKey`: the root public key the proof links to
 - `devicePublicKey`: the public key the proof attests to
+
+If no data is attested to, ie. we are just verifying a device key, then `attestedData` should be passed as `null`.
 
 Optionally pass any of `timestamp`, `identityPublicKey` or `devicePublicKey`. Verification will fail if:
 
