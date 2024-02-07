@@ -12,7 +12,7 @@ npm install keypear
 const IdentityKey = require('@holepunchto/keet-identity-key')
 
 const mnemonic = Identity.generateMnemonic()
-const { root } = IdentityKey.from({ mnemonic })
+const { identityPublicKey } = IdentityKey.from({ mnemonic })
 
 const proof0 = IdentityKey.bootstrap({ mnemonic }, mainDevice.publicKey)
 const proof = IdentityKey.attest(auxillaryDevice.publicKey, mainDevice, proof0)
@@ -22,9 +22,7 @@ const info = IdentityKey.verify(proof)
 if (info === null) {
   // verification failed
 } else {
-  const { root } = IdentityKey.from({ mnemonic })
-
-  console.log(b4a.equals(info.root, root)) // true
+  console.log(b4a.equals(info.identityPublicKey, identityPublicKey)) // true
   console.log(b4a.equals(info.publicKey, auxillaryDevice.publicKey)) // true
 }
 ```
@@ -56,20 +54,20 @@ Use an existing `parent` key pair to attest to another `key`.
 
 If provided with a `proof` linking `parent` to a given root key, then the returned proof will link `key` back to the same root key.
 
-#### `info = IdentityKey.verify(proof, { timestamp, root, publicKey })`
+#### `info = IdentityKey.verify(proof, opts ={ timestamp, identityPublicKey, devicePublicKey })`
 
 Verify a proof.
 
 Returns `null` if verification fails, otherwise an object with:
-- timestamp: a timestamp at which the id was bootstrapped
-- root: the root public key the proof links to
-- publicKey: the public key the proof attests to
+- `timestamp`: a timestamp at which the id was bootstrapped
+- `identityPublicKey`: the root public key the proof links to
+- `devicePublicKey`: the public key the proof attests to
 
-Optionally pass any of `timestamp`, `root` or `publicKey`. Verification will fail if:
+Optionally pass any of `timestamp`, `identityPublicKey` or `devicePublicKey`. Verification will fail if:
 
 - proof's timestamp is less than any `timestamp` provided
-- proof links back to any key other than `root` provided
-- proof attest to any key other than `publicKey` provided
+- proof links back to any key other than `identityPublicKey` provided
+- proof attests to any key other than `devicePublicKey` provided
 
 ## License
 
