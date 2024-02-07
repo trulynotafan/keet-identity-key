@@ -3,7 +3,6 @@ const crypto = require('hypercore-crypto')
 const b4a = require('b4a')
 
 const IdentityKey = require('../')
-const KeyChain = require('../lib/keychain')
 
 test('basic', function (t) {
   const mnemonic = IdentityKey.generateMnemonic()
@@ -45,8 +44,8 @@ test('basic - root fail', function (t) {
 test('basic - device authenticates another device', function (t) {
   const mnemonic = IdentityKey.generateMnemonic()
 
-  const device1 = KeyChain.from({ seed: crypto.randomBytes(32) })
-  const device2 = KeyChain.from({ seed: crypto.randomBytes(32) })
+  const device1 = crypto.keyPair()
+  const device2 = crypto.keyPair()
 
   const { identityPublicKey } = IdentityKey.from({ mnemonic })
 
@@ -63,15 +62,15 @@ test('basic - device authenticates another device', function (t) {
 test('basic - device attests data', function (t) {
   const mnemonic = IdentityKey.generateMnemonic()
 
-  const device1 = KeyChain.from({ seed: crypto.randomBytes(32) })
-  const attestData = b4a.from('attested data')
+  const device1 = crypto.keyPair()
+  const attestedData = b4a.from('attested data')
 
   const { identityPublicKey } = IdentityKey.from({ mnemonic })
 
   const proof1 = IdentityKey.bootstrap({ mnemonic }, device1.publicKey)
-  const proof2 = IdentityKey.attestData(attestData, device1, proof1)
+  const proof2 = IdentityKey.attestData(attestedData, device1, proof1)
 
-  const auth = IdentityKey.verify(proof2, attestData)
+  const auth = IdentityKey.verify(proof2, attestedData)
 
   t.unlike(auth, null)
   t.alike(auth && auth.devicePublicKey, device1.publicKey)
@@ -81,13 +80,25 @@ test('basic - device attests data', function (t) {
 test('basic - attested data fail', function (t) {
   const mnemonic = IdentityKey.generateMnemonic()
 
-  const device1 = KeyChain.from({ seed: crypto.randomBytes(32) })
-  const attestData = b4a.from('attested data')
+  const device1 = crypto.keyPair()
+  const attestedData = b4a.from('attested data')
 
   const proof1 = IdentityKey.bootstrap({ mnemonic }, device1.publicKey)
-  const proof2 = IdentityKey.attestData(attestData, device1, proof1)
+  const proof2 = IdentityKey.attestData(attestedData, device1, proof1)
 
   const auth = IdentityKey.verify(proof2, b4a.from('not attested data'))
 
   t.alike(auth, null)
+})
+
+test('basic - root attests data', function (t) {
+  const root = crypto.keyPair()
+  const attestedData = b4a.from('attested data')
+
+  const proof = IdentityKey.attestData(attestedData, root)
+  const auth = IdentityKey.verify(proof, attestedData, { identityPublicKey: root.publicKey })
+
+  t.unlike(auth, null)
+  t.alike(auth && auth.devicePublicKey, root.publicKey)
+  t.alike(auth && auth.identityPublicKey, root.publicKey)
 })

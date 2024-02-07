@@ -82,6 +82,15 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
+    if (!proof) {
+      proof = {
+        version: VERSION,
+        timestamp: Date.now(),
+        root: keyPair.publicKey,
+        chain: []
+      }
+    }
+
     const signable = c.encode(AttestedData, hash(attestedData))
     const signature = sign(signable, keyPair)
 
@@ -118,7 +127,9 @@ module.exports = class IdentityKey {
 
     const devicePublicKey = attestedData === null
       ? chain[chain.length - 1].publicKey
-      : chain[chain.length - 2].publicKey
+      : chain.length > 1
+        ? chain[chain.length - 2].publicKey
+        : root
 
     if (opts.devicePublicKey) {
       if (!b4a.equals(devicePublicKey, opts.devicePublicKey)) return null

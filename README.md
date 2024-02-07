@@ -54,9 +54,11 @@ Use an existing `parent` key pair to attest to another `key`.
 
 If provided with a `proof` linking `parent` to a given root key, then the returned proof will link `key` back to the same root key.
 
-#### `proof = IdentityKey.attestData(data, keyPair, proof)`
+#### `proof = IdentityKey.attestData(data, keyPair, [proof])`
 
-Append an attestation of arbitrary `data` to an existing proof. The attestation will be verified as part of the proof.
+Create an attestation of arbitrary `data` using `keyPair`.
+
+If a `proof` is provided, the attestation will be appended to the proof and verified as part of it.
 
 `keyPair` should correspond to the last public key in the proof's chain.
 
