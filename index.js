@@ -10,13 +10,8 @@ const {
   AttestedDevice
 } = require('./lib/encoding')
 
-const {
-  VERSION,
-  KEET_ROOT_PATH,
-  IDENTITY_INDEX,
-  DISCOVERY_INDEX,
-  ENCRYPTION_INDEX
-} = require('./lib/constants')
+const VERSION = 0
+const KEET_TYPE = 5338
 
 module.exports = class IdentityKey {
   static generateMnemonic () {
@@ -34,14 +29,14 @@ module.exports = class IdentityKey {
 
     const keyPair = KeyChain.from({ seed, mnemonic })
 
-    const path = getBIP48Paths()
+    if (!seed) seed = keyPair.seed
 
-    const root = keyPair.get(path.toIdentityKey)
-    const discoveryKey = keyPair.get(path.toDiscoveryKey).secretKey.subarray(0, 32)
-    const encryptionKey = keyPair.get(path.toEncryptionKey).secretKey.subarray(0, 32)
+    const identityKey = keyPair.get(identityKeyPath(accountIndex))
+    const discoveryKey = keyPair.getSymmetricKey(discoveryKeyPath(accountIndex))
+    const encryptionKey = keyPair.getSymmetricKey(encryptionKeyPath(accountIndex))
 
     return {
-      identityPublicKey: root.publicKey,
+      identityPublicKey: identityKey.publicKey,
       discoveryKey,
       encryptionKey
     }
@@ -52,9 +47,10 @@ module.exports = class IdentityKey {
       throw new Error('Account recovery is not supported yet')
     }
 
-    const path = getBIP48Paths()
-
-    if (!root) root = KeyChain.from({ seed, mnemonic }, path.toIdentityKey)
+    if (!root) {
+      const identityPath = identityKeyPath(accountIndex)
+      root = KeyChain.from({ seed, mnemonic }, identityPath)
+    }
 
     const proof = {
       version: VERSION,
@@ -199,10 +195,37 @@ function getLastKey (chain) {
   return chain[chain.length - 2].publicKey
 }
 
-function getBIP48Paths (accountIndex = 0) {
-  return {
-    toIdentityKey: [...KEET_ROOT_PATH, accountIndex, IDENTITY_INDEX],
-    toDiscoveryKey: [...KEET_ROOT_PATH, accountIndex, DISCOVERY_INDEX],
-    toEncryptionKey: [...KEET_ROOT_PATH, accountIndex, ENCRYPTION_INDEX]
-  }
+// slip48 derivations:
+// https://github.com/satoshilabs/slips/blob/master/slip-0048.md
+
+// identityKey -> m/48'/keet'/0'/0'
+
+function identityKeyPath (accountIndex) {
+  // https://github.com/bitcoin/bips/blob/master/bip-0043.mediawiki
+  const purpose = 48 // SLIP-48 wallet
+  const role = 0 // owner
+
+  return [purpose, KEET_TYPE, role, accountIndex, 0]
+}
+
+// slip21 derivations
+// https://github.com/satoshilabs/slips/blob/master/slip-0021.md
+
+// discoveryKey  -> m/SLIP-10/keet-identity-key/account/"discovery key"
+// encryptionKey  -> m/SLIP-10/keet-identity-key/account/"encryption key"
+
+function discoveryKeyPath (accountIndex) {
+  const purpose = 'SLIP-0021' // SLIP-21 wallet
+  const namespace = 'keet-identity-key' // keet
+  const account = accountIndex.toString(10).padStart(4, '0') // owner
+
+  return [purpose, namespace, account, 'discovery key']
+}
+
+function encryptionKeyPath (accountIndex) {
+  const purpose = 'SLIP-0021' // SLIP-21 wallet
+  const namespace = 'keet-identity-key' // keet
+  const account = accountIndex.toString(10).padStart(4, '0') // owner
+
+  return [purpose, namespace, account, 'discovery key']
 }
