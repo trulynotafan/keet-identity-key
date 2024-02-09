@@ -122,8 +122,8 @@ module.exports = class IdentityKey {
 
     const candidate = getLastKey(chain) || identity
 
-    if (opts.devicePublicKey) {
-      if (!b4a.equals(candidate, opts.devicePublicKey)) return null
+    if (opts.expectedDevice) {
+      if (!b4a.equals(candidate, opts.expectedDevice)) return null
     }
 
     const signedData = {
@@ -172,8 +172,8 @@ function validateProof (proof, attestedData, opts = {}) {
   }
 
   // verify identity
-  if (opts.identityPublicKey) {
-    if (!b4a.equals(proof.identity, opts.identityPublicKey)) return false
+  if (opts.expectedIdentity) {
+    if (!b4a.equals(proof.identity, opts.expectedIdentity)) return false
   }
 
   return validateAttestedData(proof.chain, attestedData)

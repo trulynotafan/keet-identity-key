@@ -39,7 +39,18 @@ test('basic - root fail', function (t) {
   const { publicKey } = crypto.keyPair()
 
   const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
-  const auth = IdentityKey.verify(proof, null, { identityPublicKey: publicKey })
+  const auth = IdentityKey.verify(proof, null, { expectedIdentity: b4a.alloc(32) })
+
+  t.alike(auth, null)
+})
+
+test('basic - device fail', function (t) {
+  const mnemonic = IdentityKey.generateMnemonic()
+
+  const { publicKey } = crypto.keyPair()
+
+  const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
+  const auth = IdentityKey.verify(proof, null, { expectedDevice: b4a.alloc(32) })
 
   t.alike(auth, null)
 })
