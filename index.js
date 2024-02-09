@@ -11,8 +11,6 @@ const {
 } = require('./lib/encoding')
 
 const {
-  ATTESTED_DEVICE,
-  ATTESTED_DATA,
   VERSION,
   KEET_ROOT_PATH,
   KEET_DISCOVERY_PATH,
@@ -53,24 +51,25 @@ module.exports = class IdentityKey {
       chain: []
     }
 
-    return IdentityKey.attest(device, root, proof)
+    return IdentityKey.attestDevice(device, root, proof)
   }
 
-  static attest (publicKey, parent, proof) {
+  static attestDevice (publicKey, parent, proof) {
     if (!proof) return IdentityKey.bootstrap({ root: parent }, publicKey)
 
     if (b4a.isBuffer(proof)) {
       proof = c.decode(ProofEncoding, proof)
     }
 
-    const signable = c.encode(AttestedDevice, publicKey)
+    const signable = c.encode(AttestedDevice, {
+      timestamp: proof.timestamp,
+      root: proof.root,
+      device: publicKey
+    })
+
     const signature = sign(signable, parent)
 
-    proof.chain.push({
-      type: ATTESTED_DEVICE,
-      publicKey,
-      signature
-    })
+    proof.chain.push({ publicKey, signature })
 
     return c.encode(ProofEncoding, proof)
   }
@@ -91,13 +90,15 @@ module.exports = class IdentityKey {
       }
     }
 
-    const signable = c.encode(AttestedData, hash(attestedData))
+    const signable = c.encode(AttestedData, {
+      timestamp: proof.timestamp,
+      root: proof.root,
+      data: hash(attestedData)
+    })
+
     const signature = sign(signable, keyPair)
 
-    proof.chain.push({
-      type: ATTESTED_DATA,
-      signature
-    })
+    proof.chain.push({ signature })
 
     return c.encode(ProofEncoding, proof)
   }
@@ -107,32 +108,21 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
-    const { version, timestamp, root, chain } = proof
+    if (!validateProof(proof, attestedData, opts)) return null
 
-    // validate version
-    if (version > VERSION) return null
+    const { timestamp, root, chain } = proof
 
-    // validate attested data
-    if (!validateAdditionalData(chain, attestedData)) return null
-
-    // verify timestamp
-    if (opts.timestamp) {
-      if (timestamp < opts.timestamp) return null
-    }
-
-    // verify root
-    if (opts.identityPublicKey) {
-      if (!b4a.equals(root, opts.identityPublicKey)) return null
-    }
-
-    const devicePublicKey = attestedData === null
-      ? chain[chain.length - 1].publicKey
-      : chain.length > 1
-        ? chain[chain.length - 2].publicKey
-        : root
+    const candidate = getLastKey(chain) || root
 
     if (opts.devicePublicKey) {
-      if (!b4a.equals(devicePublicKey, opts.devicePublicKey)) return null
+      if (!b4a.equals(candidate, opts.devicePublicKey)) return null
+    }
+
+    const signedData = {
+      timestamp,
+      root,
+      device: null,
+      data: attestedData ? hash(attestedData) : null
     }
 
     let parent = root
@@ -141,9 +131,10 @@ module.exports = class IdentityKey {
     for (let i = 0; i < chain.length; i++) {
       const { publicKey, signature } = chain[i]
 
-      const signable = publicKey
-        ? c.encode(AttestedDevice, publicKey)
-        : c.encode(AttestedData, hash(attestedData))
+      signedData.device = publicKey
+
+      const enc = publicKey ? AttestedDevice : AttestedData
+      const signable = c.encode(enc, signedData)
 
       if (!verify(signable, signature, parent)) {
         return null
@@ -155,12 +146,29 @@ module.exports = class IdentityKey {
     return {
       timestamp,
       identityPublicKey: root,
-      devicePublicKey
+      devicePublicKey: candidate
     }
   }
 }
 
-function validateAdditionalData (chain, attestedData) {
+function validateProof (proof, attestedData, opts = {}) {
+  // validate version
+  if (proof.version > VERSION) return false
+
+  // verify timestamp
+  if (opts.timestamp) {
+    if (proof.timestamp < opts.timestamp) return false
+  }
+
+  // verify root
+  if (opts.identityPublicKey) {
+    if (!b4a.equals(proof.root, opts.identityPublicKey)) return false
+  }
+
+  return validateAttestedData(proof.chain, attestedData)
+}
+
+function validateAttestedData (chain, attestedData) {
   const last = chain[chain.length - 1]
 
   if (!attestedData && attestedData !== null) return false
@@ -168,4 +176,13 @@ function validateAdditionalData (chain, attestedData) {
   if (attestedData !== null && last.publicKey !== null) return false
 
   return true
+}
+
+function getLastKey (chain) {
+  const last = chain[chain.length - 1]
+
+  if (last.publicKey) return last.publicKey
+  if (chain.length === 1) return null
+
+  return chain[chain.length - 2].publicKey
 }

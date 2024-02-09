@@ -50,7 +50,7 @@ test('basic - device authenticates another device', function (t) {
   const { identityPublicKey } = IdentityKey.from({ mnemonic })
 
   const proof1 = IdentityKey.bootstrap({ mnemonic }, device1.publicKey)
-  const proof2 = IdentityKey.attest(device2.publicKey, device1, proof1)
+  const proof2 = IdentityKey.attestDevice(device2.publicKey, device1, proof1)
 
   const auth = IdentityKey.verify(proof2, null)
 
