@@ -48,9 +48,9 @@ Returns `keys` object:
 
 Bootstrap an intitial `deviceKey` using a mnemonic
 
-#### `proof = IdentityKey.attest(key, parent, [proof])`
+#### `proof = IdentityKey.attestDevice(device, parent, [proof])`
 
-Use an existing `parent` key pair to attest to another `key`.
+Use an existing `parent` key pair to attest to another `device` key.
 
 If provided with a `proof` linking `parent` to a given root key, then the returned proof will link `key` back to the same root key.
 
