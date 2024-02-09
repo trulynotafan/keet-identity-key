@@ -22,8 +22,8 @@ module.exports = class IdentityKey {
     return KeyChain.generateMnemonic()
   }
 
-  static generateSeed (mnemonic) {
-    return KeyChain.generateSeed(mnemonic)
+  static deriveSeed (mnemonic) {
+    return KeyChain.deriveSeed(mnemonic)
   }
 
   static from ({ seed, mnemonic }) {

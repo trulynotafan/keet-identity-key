@@ -14,9 +14,9 @@
     "standard": "^17.1.0"
   },
   "dependencies": {
+    "@holepunchto/bip39": "^1.0.1",
     "@holepunchto/hmac": "^2.0.1",
     "b4a": "^1.6.4",
-    "bip39": "^3.1.0",
     "compact-encoding": "^2.13.0",
     "nanoassert": "^2.0.0",
     "sodium-universal": "^4.0.0"
