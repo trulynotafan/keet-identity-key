@@ -19,13 +19,13 @@ test('basic', function (t) {
   t.alike(auth && auth.identityPublicKey, identityPublicKey)
 })
 
-test('basic - timestamp fail', function (t) {
+test('basic - epoch fail', function (t) {
   const mnemonic = IdentityKey.generateMnemonic()
 
   const { publicKey } = crypto.keyPair()
 
   const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
-  const auth = IdentityKey.verify(proof, null, { timestamp: Date.now() + 1 })
+  const auth = IdentityKey.verify(proof, null, { epoch: Date.now() + 1 })
 
   t.alike(auth, null)
 })

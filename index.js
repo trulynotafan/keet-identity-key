@@ -42,36 +42,36 @@ module.exports = class IdentityKey {
     }
   }
 
-  static bootstrap ({ root, seed, mnemonic, accountIndex = 0 }, device) {
+  static bootstrap ({ identity, seed, mnemonic, accountIndex = 0 }, device) {
     if (accountIndex !== 0) {
       throw new Error('Account recovery is not supported yet')
     }
 
-    if (!root) {
+    if (!identity) {
       const identityPath = identityKeyPath(accountIndex)
-      root = KeyChain.from({ seed, mnemonic }, identityPath)
+      identity = KeyChain.from({ seed, mnemonic }, identityPath)
     }
 
     const proof = {
       version: VERSION,
-      timestamp: Date.now(),
-      root: root.publicKey,
+      epoch: Date.now(),
+      identity: identity.publicKey,
       chain: []
     }
 
-    return IdentityKey.attestDevice(device, root, proof)
+    return IdentityKey.attestDevice(device, identity, proof)
   }
 
   static attestDevice (publicKey, parent, proof) {
-    if (!proof) return IdentityKey.bootstrap({ root: parent }, publicKey)
+    if (!proof) return IdentityKey.bootstrap({ identity: parent }, publicKey)
 
     if (b4a.isBuffer(proof)) {
       proof = c.decode(ProofEncoding, proof)
     }
 
     const signable = c.encode(AttestedDevice, {
-      timestamp: proof.timestamp,
-      root: proof.root,
+      epoch: proof.epoch,
+      identity: proof.identity,
       device: publicKey
     })
 
@@ -92,15 +92,15 @@ module.exports = class IdentityKey {
     if (!proof) {
       proof = {
         version: VERSION,
-        timestamp: Date.now(),
-        root: keyPair.publicKey,
+        epoch: Date.now(),
+        identity: keyPair.publicKey,
         chain: []
       }
     }
 
     const signable = c.encode(AttestedData, {
-      timestamp: proof.timestamp,
-      root: proof.root,
+      epoch: proof.epoch,
+      identity: proof.identity,
       data: hash(attestedData)
     })
 
@@ -118,22 +118,22 @@ module.exports = class IdentityKey {
 
     if (!validateProof(proof, attestedData, opts)) return null
 
-    const { timestamp, root, chain } = proof
+    const { epoch, identity, chain } = proof
 
-    const candidate = getLastKey(chain) || root
+    const candidate = getLastKey(chain) || identity
 
     if (opts.devicePublicKey) {
       if (!b4a.equals(candidate, opts.devicePublicKey)) return null
     }
 
     const signedData = {
-      timestamp,
-      root,
+      epoch,
+      identity,
       device: null,
       data: attestedData ? hash(attestedData) : null
     }
 
-    let parent = root
+    let parent = identity
 
     // verify chain
     for (let i = 0; i < chain.length; i++) {
@@ -152,8 +152,8 @@ module.exports = class IdentityKey {
     }
 
     return {
-      timestamp,
-      identityPublicKey: root,
+      epoch,
+      identityPublicKey: identity,
       devicePublicKey: candidate
     }
   }
@@ -163,14 +163,14 @@ function validateProof (proof, attestedData, opts = {}) {
   // validate version
   if (proof.version > VERSION) return false
 
-  // verify timestamp
-  if (opts.timestamp) {
-    if (proof.timestamp < opts.timestamp) return false
+  // verify epoch
+  if (opts.epoch) {
+    if (proof.epoch < opts.epoch) return false
   }
 
-  // verify root
+  // verify identity
   if (opts.identityPublicKey) {
-    if (!b4a.equals(proof.root, opts.identityPublicKey)) return false
+    if (!b4a.equals(proof.identity, opts.identityPublicKey)) return false
   }
 
   return validateAttestedData(proof.chain, attestedData)
