@@ -151,8 +151,10 @@ module.exports = class IdentityKey {
       parent = publicKey
     }
 
+    const receipt = c.encode(c.uint64, epoch)
+
     return {
-      epoch,
+      receipt,
       identityPublicKey: identity,
       devicePublicKey: candidate
     }
@@ -164,8 +166,9 @@ function validateProof (proof, attestedData, opts = {}) {
   if (proof.version > VERSION) return false
 
   // verify epoch
-  if (opts.epoch) {
-    if (proof.epoch < opts.epoch) return false
+  if (opts.receipt) {
+    const epoch = c.decode(c.uint64, opts.receipt)
+    if (proof.epoch < epoch) return false
   }
 
   // verify identity

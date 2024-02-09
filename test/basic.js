@@ -1,5 +1,6 @@
 const test = require('brittle')
 const crypto = require('hypercore-crypto')
+const c = require('compact-encoding')
 const b4a = require('b4a')
 
 const IdentityKey = require('../')
@@ -25,7 +26,9 @@ test('basic - epoch fail', function (t) {
   const { publicKey } = crypto.keyPair()
 
   const proof = IdentityKey.bootstrap({ mnemonic }, publicKey)
-  const auth = IdentityKey.verify(proof, null, { epoch: Date.now() + 1 })
+  const receipt = c.encode(c.uint64, Date.now() + 1)
+
+  const auth = IdentityKey.verify(proof, null, { receipt })
 
   t.alike(auth, null)
 })
