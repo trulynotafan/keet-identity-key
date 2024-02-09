@@ -13,8 +13,9 @@ const {
 const {
   VERSION,
   KEET_ROOT_PATH,
-  KEET_DISCOVERY_PATH,
-  KEET_ENCRYPTION_PATH
+  IDENTITY_INDEX,
+  DISCOVERY_INDEX,
+  ENCRYPTION_INDEX
 } = require('./lib/constants')
 
 module.exports = class IdentityKey {
@@ -26,13 +27,18 @@ module.exports = class IdentityKey {
     return KeyChain.deriveSeed(mnemonic)
   }
 
-  static from ({ seed, mnemonic }) {
+  static from ({ seed, mnemonic, accountIndex = 0 }) {
+    if (accountIndex !== 0) {
+      throw new Error('Account recovery is not supported yet')
+    }
+
     const keyPair = KeyChain.from({ seed, mnemonic })
 
-    const root = keyPair.get(KEET_ROOT_PATH)
+    const path = getBIP48Paths()
 
-    const discoveryKey = keyPair.get(KEET_DISCOVERY_PATH).secretKey.subarray(0, 32)
-    const encryptionKey = keyPair.get(KEET_ENCRYPTION_PATH).secretKey.subarray(0, 32)
+    const root = keyPair.get(path.toIdentityKey)
+    const discoveryKey = keyPair.get(path.toDiscoveryKey).secretKey.subarray(0, 32)
+    const encryptionKey = keyPair.get(path.toEncryptionKey).secretKey.subarray(0, 32)
 
     return {
       identityPublicKey: root.publicKey,
@@ -41,8 +47,14 @@ module.exports = class IdentityKey {
     }
   }
 
-  static bootstrap ({ root, seed, mnemonic }, device) {
-    if (!root) root = KeyChain.from({ seed, mnemonic }, KEET_ROOT_PATH)
+  static bootstrap ({ root, seed, mnemonic, accountIndex = 0 }, device) {
+    if (accountIndex !== 0) {
+      throw new Error('Account recovery is not supported yet')
+    }
+
+    const path = getBIP48Paths()
+
+    if (!root) root = KeyChain.from({ seed, mnemonic }, path.toIdentityKey)
 
     const proof = {
       version: VERSION,
@@ -185,4 +197,12 @@ function getLastKey (chain) {
   if (chain.length === 1) return null
 
   return chain[chain.length - 2].publicKey
+}
+
+function getBIP48Paths (accountIndex = 0) {
+  return {
+    toIdentityKey: [...KEET_ROOT_PATH, accountIndex, IDENTITY_INDEX],
+    toDiscoveryKey: [...KEET_ROOT_PATH, accountIndex, DISCOVERY_INDEX],
+    toEncryptionKey: [...KEET_ROOT_PATH, accountIndex, ENCRYPTION_INDEX]
+  }
 }
