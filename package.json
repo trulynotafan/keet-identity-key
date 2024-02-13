@@ -21,10 +21,9 @@
     "nanoassert": "^2.0.0",
     "sodium-universal": "^4.0.0"
   },
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
+  "files": [
+    "lib/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/holepunchto/keet-identity-key.git"
