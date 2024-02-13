@@ -7,7 +7,8 @@ const { sign, verify, hash } = require('./lib/crypto')
 const {
   ProofEncoding,
   AttestedData,
-  AttestedDevice
+  AttestedDevice,
+  ReceiptEncoding
 } = require('./lib/encoding')
 
 const VERSION = 0
@@ -151,7 +152,7 @@ module.exports = class IdentityKey {
       parent = publicKey
     }
 
-    const receipt = c.encode(c.uint64, epoch)
+    const receipt = c.encode(ReceiptEncoding, { epoch })
 
     return {
       receipt,
@@ -167,7 +168,7 @@ function validateProof (proof, attestedData, opts = {}) {
 
   // verify epoch
   if (opts.receipt) {
-    const epoch = c.decode(c.uint64, opts.receipt)
+    const { epoch } = c.decode(ReceiptEncoding, opts.receipt)
     if (proof.epoch < epoch) return false
   }
 
