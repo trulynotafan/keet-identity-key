@@ -9,10 +9,10 @@ npm install @holepunchto/keet-identity-key
 ## Usage
 
 ``` js
-const IdentityKey = require('@holepunchto/keet-identity-key')
+const IdentityKey = require('@holepunchto/keet-hd-key')
 
-const mnemonic = Identity.generateMnemonic()
-const identity = IdentityKey.from({ mnemonic })
+const mnemonic = IdentityKey.generateMnemonic()
+const { identityPublicKey } = IdentityKey.from({ mnemonic })
 
 const proof0 = identity.bootstrap(mainDevice.publicKey)
 const proof = IdentityKey.attest(auxillaryDevice.publicKey, mainDevice, proof0)
@@ -22,7 +22,7 @@ const info = IdentityKey.verify(proof)
 if (info === null) {
   // verification failed
 } else {
-  console.log(b4a.equals(info.identityPublicKey, identity.identityPublicKey)) // true
+  console.log(b4a.equals(info.identityPublicKey, identityPublicKey)) // true
   console.log(b4a.equals(info.publicKey, auxillaryDevice.publicKey)) // true
 }
 ```
