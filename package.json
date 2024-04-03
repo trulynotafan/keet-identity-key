@@ -1,6 +1,6 @@
 {
   "name": "@holepunchto/keet-identity-key",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Hierarchical Deterministic Keys for Keet Identities",
   "main": "index.js",
   "scripts": {
