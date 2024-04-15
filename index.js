@@ -11,7 +11,7 @@ const {
   ReceiptEncoding
 } = require('./lib/encoding')
 
-const VERSION = 0
+const PROOF_VERSION = 1
 const KEET_TYPE = 5338
 
 const NS_PROFILE_DISC_ENC = hash(b4a.from('profile discovery'))
@@ -65,7 +65,7 @@ module.exports = class IdentityKey {
     }
 
     const proof = {
-      version: VERSION,
+      version: PROOF_VERSION,
       epoch: Date.now(),
       identity: identity.publicKey,
       chain: []
@@ -79,6 +79,10 @@ module.exports = class IdentityKey {
 
     if (b4a.isBuffer(proof)) {
       proof = c.decode(ProofEncoding, proof)
+    }
+
+    if (proof.version === 0) {
+      throw new Error('Version 0 proofs are not supported')
     }
 
     const signable = c.encode(AttestedDevice, {
@@ -101,9 +105,13 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
+    if (proof && proof.version === 0) {
+      throw new Error('Version 0 proofs are not supported')
+    }
+
     if (!proof) {
       proof = {
-        version: VERSION,
+        version: PROOF_VERSION,
         epoch: Date.now(),
         identity: keyPair.publicKey,
         chain: []
@@ -116,9 +124,7 @@ module.exports = class IdentityKey {
       data: hash(attestedData)
     })
 
-    const signature = sign(signable, keyPair)
-
-    proof.chain.push({ signature })
+    proof.data = { signature: sign(signable, keyPair) }
 
     return c.encode(ProofEncoding, proof)
   }
@@ -134,7 +140,9 @@ module.exports = class IdentityKey {
       proof = c.decode(ProofEncoding, proof)
     }
 
-    if (!validateProof(proof, attestedData, opts)) return null
+    if (!validateProof(proof, attestedData, opts)) {
+      return null
+    }
 
     const { epoch, identity, chain } = proof
 
@@ -144,29 +152,35 @@ module.exports = class IdentityKey {
       if (!b4a.equals(candidate, opts.expectedDevice)) return null
     }
 
-    const signedData = {
-      epoch,
-      identity,
-      device: null,
-      data: attestedData ? hash(attestedData) : null
-    }
-
     let parent = identity
 
     // verify chain
     for (let i = 0; i < chain.length; i++) {
       const { publicKey, signature } = chain[i]
 
-      signedData.device = publicKey
-
-      const enc = publicKey ? AttestedDevice : AttestedData
-      const signable = c.encode(enc, signedData)
+      const signable = c.encode(AttestedDevice, {
+        epoch,
+        identity,
+        device: publicKey
+      })
 
       if (!verify(signable, signature, parent)) {
         return null
       }
 
       parent = publicKey
+    }
+
+    if (proof.data) {
+      const signable = c.encode(AttestedData, {
+        epoch,
+        identity,
+        data: hash(attestedData)
+      })
+
+      if (!verify(signable, proof.data.signature, parent)) {
+        return null
+      }
     }
 
     const receipt = c.encode(ReceiptEncoding, { epoch })
@@ -180,8 +194,11 @@ module.exports = class IdentityKey {
 }
 
 function validateProof (proof, attestedData, opts = {}) {
+  // version 0 is ignored
+  if (proof.version === 0) return false
+
   // validate version
-  if (proof.version > VERSION) return false
+  if (proof.version > PROOF_VERSION) return false
 
   // verify epoch
   if (opts.receipt) {
@@ -194,26 +211,19 @@ function validateProof (proof, attestedData, opts = {}) {
     if (!b4a.equals(proof.identity, opts.expectedIdentity)) return false
   }
 
-  return validateAttestedData(proof.chain, attestedData)
+  return validateAttestedData(proof.data, attestedData)
 }
 
-function validateAttestedData (chain, attestedData) {
-  const last = chain[chain.length - 1]
-
-  if (!attestedData && attestedData !== null) return false
-  if (attestedData === null && last.publicKey === null) return false
-  if (attestedData !== null && last.publicKey !== null) return false
-
+function validateAttestedData (data, attestedData) {
+  if (!data && attestedData) return false
   return true
 }
 
 function getLastKey (chain) {
+  if (!chain.length) return null
+
   const last = chain[chain.length - 1]
-
-  if (last.publicKey) return last.publicKey
-  if (chain.length === 1) return null
-
-  return chain[chain.length - 2].publicKey
+  return last.publicKey
 }
 
 // slip48 derivations:
