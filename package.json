@@ -1,12 +1,12 @@
 {
-  "name": "@holepunchto/keet-identity-key",
+  "name": "keet-identity-key",
   "version": "3.0.0",
   "description": "Hierarchical Deterministic Keys for Keet Identities",
   "main": "index.js",
   "scripts": {
     "test": "standard && brittle test/*.js"
   },
-  "author": "",
+  "author": "Holepunch Inc.",
   "license": "Apache-2.0",
   "devDependencies": {
     "brittle": "^3.3.2",
