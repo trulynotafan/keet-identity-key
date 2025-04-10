@@ -1,6 +1,6 @@
 {
   "name": "keet-identity-key",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Hierarchical Deterministic Keys for Keet Identities",
   "main": "index.js",
   "scripts": {
