@@ -14,12 +14,13 @@
     "standard": "^17.1.0"
   },
   "dependencies": {
+    "bip39-mnemonic": "^2.1.1",
     "b4a": "^1.6.4",
     "bip39-mnemonic": "^2.2.0",
     "compact-encoding": "^2.13.0",
     "nanoassert": "^2.0.0",
     "sodium-hmac": "^2.0.1",
-    "sodium-universal": "^4.0.1"
+    "sodium-universal": "^5.0.1"
   },
   "files": [
     "lib/*"
